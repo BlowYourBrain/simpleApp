@@ -1,4 +1,4 @@
-package com.company.regular.simpleapp;
+package com.company.regular.simpleapp.activity;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -6,6 +6,7 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 
+import com.company.regular.simpleapp.R;
 import com.company.regular.simpleapp.adapter.RecyclerViewAdapter;
 import com.company.regular.simpleapp.retrofit.GetFileQuery;
 import com.company.regular.simpleapp.retrofit.ImageEntryModel;
@@ -27,18 +28,28 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		mRecyclerView = findViewById(R.id.recyclerView);
+	}
 
 
+	@Override
+	protected void onStart() {
+		super.onStart();
+		fillData();
+	}
+
+
+	/**
+	 * Метод, который запускает процесс инициализации данных
+	 */
+	private void fillData() {
 		GetFileQuery query = RetrofitBuilder.getFileQuery();
 		query.getFile().enqueue(new Callback<ImageEntryModel>() {
 			@Override
 			public void onResponse(Call<ImageEntryModel> call, Response<ImageEntryModel> response) {
-				Log.d("debugkey", response.body().getImageEntry().get(0).getImageUrl());
-				Log.d("debugkey", "response code: " + response.code());
 				initRecyclerView(response.body());
 				if (response.body() != null) {
 					mData = response.body();
-					Util.saveCurrencyInCache(MainActivity.this, response.body());
+					Util.saveDataInCache(MainActivity.this, response.body());
 					initRecyclerView(response.body());
 				}
 			}
@@ -46,9 +57,13 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
 			@Override
 			public void onFailure(Call<ImageEntryModel> call, Throwable t) {
-				Util.getDataFromCache(MainActivity.this);
-				Log.d("debugkey", "fucked up");
 				t.printStackTrace();
+				mData = Util.getDataFromCache(MainActivity.this);
+				if (mData != null) {
+					initRecyclerView(mData);
+				} else {
+					Log.d("debugkey", "totally fucked up");
+				}
 			}
 		});
 	}
@@ -61,10 +76,13 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 	}
 
 
+	/**
+	 * Обработка клика по КАРТИНКЕ в адаптере (именно по картинке, а не по ViewHolder)
+	 */
 	@Override
 	public void onItemClicked(int position) {
-		if (mData != null){
-			mData.getImageEntry().get(position);
+		if (mData != null) {
+			FullSizeImageActivity.startActivity(this, mData.getImageEntry().get(position).getImageUrl());
 		}
 	}
 }

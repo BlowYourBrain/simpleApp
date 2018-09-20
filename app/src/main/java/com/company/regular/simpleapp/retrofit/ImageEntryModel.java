@@ -5,6 +5,9 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 
+/**
+ * Объект, в котором хранится список картинок с url
+ * */
 public class ImageEntryModel {
 	@Expose
 	@SerializedName("images")
