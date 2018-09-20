@@ -60,13 +60,13 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
 	@Override
 	public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+		final int IMAGE_SIZE = 200;
+
 		Picasso.get()
 				.load(mData.getImageEntry().get(position).getImageUrl())
-				.resize(200, 200)
+				.resize(IMAGE_SIZE, IMAGE_SIZE)
 				.placeholder(R.drawable.ic_baseline_photo_24px)
 				.into(holder.image);
-
-
 	}
 
 

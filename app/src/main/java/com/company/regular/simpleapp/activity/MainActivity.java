@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 
 import com.company.regular.simpleapp.R;
 import com.company.regular.simpleapp.adapter.RecyclerViewAdapter;
@@ -20,6 +22,7 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity implements RecyclerViewAdapter.OnRecyclerViewItemClicked {
 	private final byte NUMBER_OF_COLUMNS = 2;
 	private RecyclerView mRecyclerView;
+	private TextView mNoDataTextView;
 	private ImageEntryModel mData;
 
 
@@ -27,7 +30,9 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		mRecyclerView = findViewById(R.id.recyclerView);
+		mRecyclerView = findViewById(R.id.recycler_view);
+		mNoDataTextView = findViewById(R.id.no_data);
+		shouldShowError(false);
 	}
 
 
@@ -62,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 				if (mData != null) {
 					initRecyclerView(mData);
 				} else {
-					Log.d("debugkey", "totally fucked up");
+					shouldShowError(true);
 				}
 			}
 		});
@@ -73,6 +78,12 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 		mRecyclerView.setLayoutManager(new GridLayoutManager(this, NUMBER_OF_COLUMNS));
 		RecyclerViewAdapter adapter = new RecyclerViewAdapter(imageEntryModel, this);
 		mRecyclerView.setAdapter(adapter);
+	}
+
+
+	private void shouldShowError(boolean shouldShow) {
+		if (shouldShow) mNoDataTextView.setVisibility(View.VISIBLE);
+		else mNoDataTextView.setVisibility(View.GONE);
 	}
 
 

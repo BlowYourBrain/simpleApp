@@ -6,9 +6,11 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.ImageView;
 
 import com.company.regular.simpleapp.R;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
@@ -45,7 +47,19 @@ public class FullSizeImageActivity extends AppCompatActivity {
 					.load(imageUrl)
 					.networkPolicy(NetworkPolicy.OFFLINE)
 					.placeholder(R.drawable.ic_baseline_photo_24px)
-					.into(imageView);
+					.into(imageView, new Callback() {
+						@Override
+						public void onSuccess() {
+							Log.d("debugkey", "succes!");
+						}
+
+
+						@Override
+						public void onError(Exception e) {
+							Log.d("debugkey", "failed to load");
+							e.printStackTrace();
+						}
+					});
 		}
 	}
 }

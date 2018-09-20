@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">simpleApp</string>
+    <string name="no_data">Не удалось загрузить данные</string>
 </resources>
