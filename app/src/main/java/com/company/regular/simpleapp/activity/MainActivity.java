@@ -1,5 +1,7 @@
 package com.company.regular.simpleapp.activity;
 
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
@@ -13,17 +15,20 @@ import com.company.regular.simpleapp.adapter.RecyclerViewAdapter;
 import com.company.regular.simpleapp.retrofit.GetFileQuery;
 import com.company.regular.simpleapp.retrofit.ImageEntryModel;
 import com.company.regular.simpleapp.retrofit.RetrofitBuilder;
+import com.company.regular.simpleapp.utils.InternetConnection;
 import com.company.regular.simpleapp.utils.Util;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity implements RecyclerViewAdapter.OnRecyclerViewItemClicked {
+public class MainActivity extends AppCompatActivity implements
+		RecyclerViewAdapter.OnRecyclerViewItemClicked, InternetConnection.ConnectivityListener {
 	private final byte NUMBER_OF_COLUMNS = 2;
 	private RecyclerView mRecyclerView;
 	private TextView mNoDataTextView;
 	private ImageEntryModel mData;
+	private InternetConnection mBroadcastReceiver;
 
 
 	@Override
@@ -32,6 +37,11 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 		setContentView(R.layout.activity_main);
 		mRecyclerView = findViewById(R.id.recycler_view);
 		mNoDataTextView = findViewById(R.id.no_data);
+
+		mBroadcastReceiver = new InternetConnection(this);
+		IntentFilter intentFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+		registerReceiver(mBroadcastReceiver, intentFilter);
+
 		shouldShowError(false);
 	}
 
@@ -43,38 +53,56 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 	}
 
 
+	@Override
+	protected void onDestroy() {
+		unregisterReceiver(mBroadcastReceiver);
+		super.onDestroy();
+	}
+
+
+	@Override
+	public void isNetworkOnline(boolean isOnline) {
+		if (isOnline) {
+			fillData();
+		}
+	}
+
+
 	/**
 	 * Метод, который запускает процесс инициализации данных
 	 */
 	private void fillData() {
-		GetFileQuery query = RetrofitBuilder.getFileQuery();
-		query.getFile().enqueue(new Callback<ImageEntryModel>() {
-			@Override
-			public void onResponse(Call<ImageEntryModel> call, Response<ImageEntryModel> response) {
-				initRecyclerView(response.body());
-				if (response.body() != null) {
-					mData = response.body();
-					Util.saveDataInCache(MainActivity.this, response.body());
+		if (mRecyclerView.getAdapter() == null) {
+			GetFileQuery query = RetrofitBuilder.getFileQuery();
+			query.getFile().enqueue(new Callback<ImageEntryModel>() {
+				@Override
+				public void onResponse(Call<ImageEntryModel> call, Response<ImageEntryModel> response) {
 					initRecyclerView(response.body());
+					if (response.body() != null) {
+						mData = response.body();
+						Util.saveDataInCache(MainActivity.this, response.body());
+						initRecyclerView(response.body());
+					}
 				}
-			}
 
 
-			@Override
-			public void onFailure(Call<ImageEntryModel> call, Throwable t) {
-				t.printStackTrace();
-				mData = Util.getDataFromCache(MainActivity.this);
-				if (mData != null) {
-					initRecyclerView(mData);
-				} else {
-					shouldShowError(true);
+				@Override
+				public void onFailure(Call<ImageEntryModel> call, Throwable t) {
+					t.printStackTrace();
+					mData = Util.getDataFromCache(MainActivity.this);
+					if (mData != null) {
+						initRecyclerView(mData);
+					} else {
+						shouldShowError(true);
+					}
 				}
-			}
-		});
+			});
+		}
 	}
 
 
 	private void initRecyclerView(ImageEntryModel imageEntryModel) {
+		shouldShowError(false);
 		mRecyclerView.setLayoutManager(new GridLayoutManager(this, NUMBER_OF_COLUMNS));
 		RecyclerViewAdapter adapter = new RecyclerViewAdapter(imageEntryModel, this);
 		mRecyclerView.setAdapter(adapter);
@@ -82,8 +110,13 @@ public class MainActivity extends AppCompatActivity implements RecyclerViewAdapt
 
 
 	private void shouldShowError(boolean shouldShow) {
-		if (shouldShow) mNoDataTextView.setVisibility(View.VISIBLE);
-		else mNoDataTextView.setVisibility(View.GONE);
+		if (shouldShow) {
+			mNoDataTextView.setVisibility(View.VISIBLE);
+			mRecyclerView.setVisibility(View.GONE);
+		} else {
+			mNoDataTextView.setVisibility(View.GONE);
+			mRecyclerView.setVisibility(View.VISIBLE);
+		}
 	}
 
 
